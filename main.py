@@ -27,10 +27,10 @@ def publish_image():
     tello = Tello()
     tello.connect()
     print("Tello Battery :",tello.query_battery())
-
+    time.sleep(5)
     tello.streamon()
     frame_read = tello.get_frame_read()
-
+    print("frame reading")
     encoder = 'vits'
     video_path = 1
     margin_width = 50
@@ -53,8 +53,9 @@ def publish_image():
     PrepareForNet(),
     ])
     
-
+    print("befor loop")
     while not rospy.is_shutdown():
+        print("Loop Running")
         frame = tello.get_frame_read().frame
         frame = cv2.resize(frame, (640, 480))
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) / 255.0
@@ -84,9 +85,9 @@ if __name__== "__main__":
     print("Hello")
     rospy.init_node("my_cam", anonymous=True)
     print("Image is being published to the topic /image_raw ...")
-    
+    publish_image()
     try:
-        # rospy.spin()
-        publish_image()
+        rospy.spin()
+        
     except KeyboardInterrupt:
         print("Shutting down!")
