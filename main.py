@@ -22,12 +22,15 @@ from std_msgs.msg import Int32
 
 class publish_image:
     def __init__(self):    
-        rospy.init_node("my_cam", anonymous=True)        
+        rospy.init_node("tello_depth", anonymous=True)        
         self.bridge = CvBridge()
         self.tello = Tello()
         self.tello.connect()
         print("Tello Battery :",self.tello.query_battery())
         time.sleep(5)
+        self.tello.takeoff()
+        self.tello.move_up(100)
+        # time.sleep(5)
         self.tello.streamon()
         self.frame_read = self.tello.get_frame_read()
         print("frame reading")
@@ -51,14 +54,25 @@ class publish_image:
         ])
 
         #publisher'
-        self.pub = rospy.Publisher("image_raw", Image, queue_size=10)
+        self.pub = rospy.Publisher("depth_state", Image, queue_size=10)
 
         #subscriber
         rospy.Subscriber('action', Int32 , self.callback)
 
     def callback(self, data):
         #you have to write the take action
-        self.take_action=1  
+        action = data.data
+        action = action%5
+        if action==2:
+            self.tello.move_forward(50)
+        elif action==1:
+            self.tello.rotate_counter_clockwise(10)
+        elif action==3:
+            self.tello.rotate_clockwise(10)
+        elif action==0:
+            self.tello.rotate_counter_clockwise(20)
+        else:
+            self.tello.rotate_clockwise(20)
 
     
     def publisher(self):
@@ -82,7 +96,7 @@ class publish_image:
             if depth_color is None:
                 rospy.ERROR("Could not grab a frame!")
                 break
-            # Publish the image to the topic image_raw
+            # Publish the image to the topic state
             try:
                 img_msg = self.bridge.cv2_to_imgmsg(depth_color, "bgr8")
                 self.pub.publish(img_msg)
