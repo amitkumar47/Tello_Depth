@@ -17,7 +17,10 @@ from tqdm import tqdm
 from depth_anything.dpt import DepthAnything
 from depth_anything.util.transform import Resize, NormalizeImage, PrepareForNet
 from std_msgs.msg import Int32
+import logging
 
+temp = 0
+logging.basicConfig(filename='example.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 class publish_image:
@@ -60,9 +63,12 @@ class publish_image:
         rospy.Subscriber('action', Int32 , self.callback)
 
     def callback(self, data):
+        global temp
         #you have to write the take action
-        action = data.data
-        action = action%5
+        action1 = data.data
+        logging.info(f"Action {temp} Started : {action1}")
+        print(f"Action {temp} Started : {action1}")
+        action = action1%5
         if action==2:
             self.tello.move_forward(50)
         elif action==1:
@@ -73,10 +79,15 @@ class publish_image:
             self.tello.rotate_counter_clockwise(20)
         else:
             self.tello.rotate_clockwise(20)
+        logging.info(f"Action {temp} Completed : {action1}")
+        print(f"Action {temp} Completed : {action1}")
+        print()
+        time.sleep(1)
+        temp+=1
 
     
     def publisher(self):
-        rate = rospy.Rate(1) 
+        rate = rospy.Rate(0.2) 
         while not rospy.is_shutdown():        
             frame = self.tello.get_frame_read().frame
             frame = cv2.resize(frame, (640, 480))
@@ -105,6 +116,7 @@ class publish_image:
     
 if __name__== "__main__":
     
+    temp = 0
     try:
         node = publish_image()
         node.publisher()
